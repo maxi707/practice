@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Downloader</title>
+</head>
+<body>
+  <input type="text" id="keyword" placeholder="Enter keyword">
+  <button onclick="getUrls()">Get URLs</button>
+  <div id="urls"></div>
+  <div id="progress"></div>
+  <div id="content"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3000');
+
+    function getUrls() {
+      const keyword = document.getElementById('keyword').value;
+      socket.emit('getUrls', keyword);
+    }
+
+    socket.on('urls', (urls) => {
+      const urlsDiv = document.getElementById('urls');
+      urlsDiv.innerHTML = '';
+      urls.forEach(url => {
+        const btn = document.createElement('button');
+        btn.textContent = url;
+        btn.onclick = () => downloadContent(url);
+        urlsDiv.appendChild(btn);
+      });
+    });
+
+    function downloadContent(url) {
+      socket.emit('downloadContent', url);
+    }
+
+    socket.on('downloadProgress', (data) => {
+      const progressDiv = document.getElementById('progress');
+      progressDiv.innerHTML = `Progress: ${data.progress}% | Threads: ${data.threads} | Size: ${data.size} bytes`;
+    });
+
+    socket.on('content', (content) => {
+      const contentDiv = document.getElementById('content');
+      contentDiv.textContent = content;
+    });
+
+    socket.on('error', (error) => {
+      alert(error);
+    });
+  </script>
+</body>
+</html>
